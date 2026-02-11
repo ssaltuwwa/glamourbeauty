@@ -1,0 +1,516 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glamour Beauty Salon | Premium Beauty Services</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header & Navigation -->
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <a href="#home" class="logo">
+                    <i class="fas fa-crown"></i>
+                    <span>Glamour<span class="logo-accent">Beauty</span></span>
+                </a>
+                
+                <div class="nav-menu" id="navMenu">
+                    <a href="#home" class="nav-link active">Home</a>
+                    <a href="#services" class="nav-link">Services</a>
+                    <a href="#about" class="nav-link">About</a>
+                    <a href="#testimonials" class="nav-link">Reviews</a>
+                    <a href="#booking" class="nav-link">Booking</a>
+                    
+                    <div class="nav-actions">
+                        <button class="btn btn-outline" id="loginBtn" onclick="showLoginModal()">
+                            <i class="fas fa-user"></i> Sign In
+                        </button>
+                        <button class="btn btn-primary" id="registerBtn" onclick="showRegisterModal()">
+                            <i class="fas fa-calendar-plus"></i> Book Now
+                        </button>
+                        <div class="user-dropdown" id="userDropdown" style="display: none;">
+                            <span class="user-greeting" id="userGreeting"></span>
+                            <button class="btn btn-text" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Experience <span class="highlight">Luxury</span> Beauty Care</h1>
+                <p class="hero-subtitle">Premium beauty services tailored to your unique style. Book your appointment and transform your look today.</p>
+                <div class="hero-actions">
+                    <button class="btn btn-primary btn-large" onclick="scrollToBooking()">
+                        <i class="fas fa-calendar-check"></i> Book Appointment
+                    </button>
+                    <button class="btn btn-outline btn-large" onclick="scrollToServices()">
+                        <i class="fas fa-spa"></i> View Services
+                    </button>
+                </div>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <div class="stat-number">500+</div>
+                    <div class="stat-label">Happy Clients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">25+</div>
+                    <div class="stat-label">Expert Stylists</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Services</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="services-section" id="services">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Premium Services</h2>
+                <p class="section-subtitle">Professional beauty treatments with exceptional quality</p>
+            </div>
+            
+            <div class="services-grid" id="servicesGrid">
+                <!-- Services loaded dynamically -->
+                <div class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading services...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-section" id="about">
+        <div class="container">
+            <div class="about-wrapper">
+                <div class="about-content">
+                    <h2 class="section-title">About Glamour Beauty</h2>
+                    <p class="section-subtitle">Excellence in beauty care since 2010</p>
+                    
+                    <div class="about-text">
+                        <p>Welcome to Glamour Beauty Salon, where luxury meets expertise. Founded over a decade ago, we have been dedicated to providing exceptional beauty services in a serene and sophisticated environment.</p>
+                        
+                        <p>Our team of certified professionals is passionate about helping you look and feel your best. We use only premium products and the latest techniques to ensure outstanding results.</p>
+                        
+                        <div class="about-features">
+                            <div class="feature">
+                                <i class="fas fa-award"></i>
+                                <h4>Certified Experts</h4>
+                                <p>All our stylists are professionally trained and certified</p>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-spa"></i>
+                                <h4>Premium Products</h4>
+                                <p>We use only high-quality, professional-grade products</p>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-heart"></i>
+                                <h4>Personalized Care</h4>
+                                <p>Tailored services to match your unique style and needs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="about-image">
+                    <div class="image-placeholder">
+                        <i class="fas fa-spa"></i>
+                        <p>Beauty Salon Interior</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Booking Section -->
+    <section class="booking-section" id="booking">
+        <div class="container">
+            <div class="booking-wrapper">
+                <div class="booking-info">
+                    <h2 class="section-title">Book Your Appointment</h2>
+                    <p class="section-subtitle">Select your preferred service, date, and time</p>
+                    
+                    <div class="booking-steps">
+                        <div class="step active">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Choose Service</h4>
+                                <p>Select from our premium services</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Pick Date & Time</h4>
+                                <p>Choose convenient appointment slot</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Confirmation</h4>
+                                <p>Receive instant confirmation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="booking-form-card">
+                    <div class="form-header">
+                        <h3>Appointment Details</h3>
+                        <p>Please fill all required fields</p>
+                    </div>
+                    
+                    <form id="bookingForm" class="booking-form">
+                        <div class="form-group">
+                            <label for="serviceSelect" class="form-label">
+                                <i class="fas fa-spa"></i> Select Service
+                            </label>
+                            <select id="serviceSelect" class="form-select" required>
+                                <option value="">Choose a service</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookingDate" class="form-label">
+                                    <i class="fas fa-calendar"></i> Date
+                                </label>
+                                <input type="date" id="bookingDate" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="bookingTime" class="form-label">
+                                    <i class="fas fa-clock"></i> Time
+                                </label>
+                                <input type="time" id="bookingTime" class="form-input" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bookingNotes" class="form-label">
+                                <i class="fas fa-sticky-note"></i> Additional Notes
+                            </label>
+                            <textarea id="bookingNotes" class="form-textarea" 
+                                      placeholder="Any special requests or preferences..." 
+                                      rows="3"></textarea>
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary btn-block" onclick="createAppointment()" id="bookBtn">
+                            <i class="fas fa-calendar-check"></i> Book Appointment
+                        </button>
+                        
+                        <div class="form-note">
+                            <i class="fas fa-info-circle"></i>
+                            <span>You need to be logged in to book an appointment</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Section (for logged in users) -->
+    <section class="dashboard-section" id="dashboard" style="display: none;">
+        <div class="container">
+            <div class="dashboard-header">
+                <h2 class="section-title">My Dashboard</h2>
+                <div class="dashboard-actions">
+                    <button class="btn btn-outline" onclick="loadAppointments()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            
+            <div class="dashboard-grid">
+                <!-- Upcoming Appointments -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-calendar-alt"></i> Upcoming Appointments</h3>
+                        <span class="badge" id="upcomingCount">0</span>
+                    </div>
+                    <div class="appointments-list" id="upcomingAppointments">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-plus"></i>
+                            <p>No upcoming appointments</p>
+                            <button class="btn btn-text" onclick="scrollToBooking()">
+                                Book your first appointment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Past Appointments -->
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-history"></i> Appointment History</h3>
+                    </div>
+                    <div class="appointments-list" id="pastAppointments">
+                        <div class="empty-state">
+                            <i class="fas fa-clock"></i>
+                            <p>No past appointments</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profile Card -->
+                <div class="dashboard-card profile-card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-user-circle"></i> My Profile</h3>
+                    </div>
+                    <div class="profile-info" id="profileInfo">
+                        <div class="empty-state">
+                            <i class="fas fa-user"></i>
+                            <p>Loading profile...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section" id="testimonials">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Client Testimonials</h2>
+                <p class="section-subtitle">What our clients say about us</p>
+            </div>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">
+                        "The best beauty salon experience I've ever had! Professional staff and amazing results."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Sarah Johnson</h4>
+                            <p>Regular Client</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star-half-alt"></i>
+                    </div>
+                    <p class="testimonial-text">
+                        "Love the booking system - so easy to use! The services are always top quality."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Michael Chen</h4>
+                            <p>First-time Client</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="testimonial-rating">
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <p class="testimonial-text">
+                        "Consistently excellent service. The staff are talented and the atmosphere is lovely."
+                    </p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="author-info">
+                            <h4>Emma Wilson</h4>
+                            <p>VIP Member</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <a href="#home" class="logo">
+                        <i class="fas fa-crown"></i>
+                        <span>Glamour<span class="logo-accent">Beauty</span></span>
+                    </a>
+                    <p class="footer-description">
+                        Premium beauty salon offering luxurious treatments with expert care.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-tiktok"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-col">
+                    <h4 class="footer-title">Services</h4>
+                    <ul class="footer-links">
+                        <li><a href="#services">Hair Styling</a></li>
+                        <li><a href="#services">Nail Care</a></li>
+                        <li><a href="#services">Skincare</a></li>
+                        <li><a href="#services">Makeup</a></li>
+                        <li><a href="#services">Spa Treatments</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h4 class="footer-title">Contact</h4>
+                    <ul class="footer-contact">
+                        <li><i class="fas fa-map-marker-alt"></i> 123 Beauty Street, City</li>
+                        <li><i class="fas fa-phone"></i> (123) 456-7890</li>
+                        <li><i class="fas fa-envelope"></i> info@glamourbeauty.com</li>
+                    </ul>
+                </div>
+                
+                <div class="footer-col">
+                    <h4 class="footer-title">Hours</h4>
+                    <ul class="footer-hours">
+                        <li>Monday - Friday: 9am - 8pm</li>
+                        <li>Saturday: 10am - 6pm</li>
+                        <li>Sunday: 11am - 5pm</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 Glamour Beauty Salon. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-circle"></i> Sign In</h3>
+                <button class="modal-close" onclick="closeModal('loginModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail" class="form-label">Email Address</label>
+                        <input type="email" id="loginEmail" class="form-input" 
+                               placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword" class="form-label">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" 
+                               placeholder="Enter your password" required>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-block" onclick="login()">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </form>
+                <div class="modal-footer">
+                    <p>Don't have an account? <a href="#" onclick="showRegisterFromLogin()">Sign up</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Create Account</h3>
+                <button class="modal-close" onclick="closeModal('registerModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerUsername" class="form-label">Full Name</label>
+                        <input type="text" id="registerUsername" class="form-input" 
+                               placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail" class="form-label">Email Address</label>
+                        <input type="email" id="registerEmail" class="form-input" 
+                               placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" id="registerPassword" class="form-input" 
+                                   placeholder="Create password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerPhone" class="form-label">Phone (Optional)</label>
+                            <input type="tel" id="registerPhone" class="form-input" 
+                                   placeholder="Phone number">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-block" onclick="register()">
+                        <i class="fas fa-user-plus"></i> Create Account
+                    </button>
+                </form>
+                <div class="modal-footer">
+                    <p>Already have an account? <a href="#" onclick="showLoginFromRegister()">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

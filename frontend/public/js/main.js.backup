@@ -1,0 +1,857 @@
+// ===== CONFIGURATION =====
+const API_URL = 'http://localhost:5001/api';
+const APP_NAME = 'Glamour Beauty Salon';
+
+// ===== STATE MANAGEMENT =====
+let currentUser = null;
+let token = localStorage.getItem('token');
+let services = [];
+
+// ===== DOM ELEMENTS =====
+const elements = {
+    // Authentication
+    loginBtn: document.getElementById('loginBtn'),
+    registerBtn: document.getElementById('registerBtn'),
+    userDropdown: document.getElementById('userDropdown'),
+    userGreeting: document.getElementById('userGreeting'),
+    
+    // Modals
+    loginModal: document.getElementById('loginModal'),
+    registerModal: document.getElementById('registerModal'),
+    
+    // Forms
+    loginEmail: document.getElementById('loginEmail'),
+    loginPassword: document.getElementById('loginPassword'),
+    registerUsername: document.getElementById('registerUsername'),
+    registerEmail: document.getElementById('registerEmail'),
+    registerPassword: document.getElementById('registerPassword'),
+    registerPhone: document.getElementById('registerPhone'),
+    
+    // Booking
+    serviceSelect: document.getElementById('serviceSelect'),
+    bookingDate: document.getElementById('bookingDate'),
+    bookingTime: document.getElementById('bookingTime'),
+    bookingNotes: document.getElementById('bookingNotes'),
+    bookBtn: document.getElementById('bookBtn'),
+    
+    // Dashboard
+    dashboard: document.getElementById('dashboard'),
+    upcomingAppointments: document.getElementById('upcomingAppointments'),
+    pastAppointments: document.getElementById('pastAppointments'),
+    profileInfo: document.getElementById('profileInfo'),
+    upcomingCount: document.getElementById('upcomingCount'),
+    
+    // Services
+    servicesGrid: document.getElementById('servicesGrid'),
+    
+    // UI Components
+    toast: document.getElementById('toast'),
+    loadingOverlay: document.getElementById('loadingOverlay'),
+    menuToggle: document.getElementById('menuToggle'),
+    navMenu: document.getElementById('navMenu')
+};
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', function() {
+    initApp();
+    setupEventListeners();
+    initSmoothNavigation();
+});
+
+function initApp() {
+    // Set minimum date for booking
+    const today = new Date().toISOString().split('T')[0];
+    if (elements.bookingDate) {
+        elements.bookingDate.min = today;
+        elements.bookingDate.value = today;
+    }
+    
+    // Set default time to next hour
+    if (elements.bookingTime) {
+        const nextHour = new Date();
+        nextHour.setHours(nextHour.getHours() + 1);
+        elements.bookingTime.value = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
+    }
+    
+    // Check authentication
+    checkAuth();
+    
+    // Load services
+    loadServices();
+    
+    // Update UI based on auth state
+    updateUI();
+}
+
+function setupEventListeners() {
+    // Mobile menu toggle
+    if (elements.menuToggle) {
+        elements.menuToggle.addEventListener('click', toggleMobileMenu);
+    }
+    
+    // Close modals on overlay click
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            closeAllModals();
+        }
+    });
+    
+    // Close modals on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAllModals();
+        }
+    });
+    
+    // Update booking button state
+    if (elements.serviceSelect) {
+        elements.serviceSelect.addEventListener('change', updateBookButton);
+    }
+}
+
+// ===== SMOOTH NAVIGATION =====
+function initSmoothNavigation() {
+    // Smooth scroll for navigation links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+                
+                // Close mobile menu if open
+                if (elements.navMenu) {
+                    elements.navMenu.classList.remove('active');
+                }
+                
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                this.classList.add('active');
+            }
+        });
+    });
+    
+    // Update active nav link on scroll
+    window.addEventListener('scroll', updateActiveNavLink);
+}
+
+function updateActiveNavLink() {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    let current = '';
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.clientHeight;
+        if (scrollY >= (sectionTop - 100)) {
+            current = section.getAttribute('id');
+        }
+    });
+    
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${current}`) {
+            link.classList.add('active');
+        }
+    });
+}
+
+function toggleMobileMenu() {
+    if (elements.navMenu) {
+        elements.navMenu.classList.toggle('active');
+    }
+}
+
+// ===== AUTHENTICATION =====
+function checkAuth() {
+    if (!token) {
+        currentUser = null;
+        return;
+    }
+    
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        currentUser = {
+            id: payload.userId,
+            role: payload.role,
+            email: payload.email
+        };
+        
+        // Load user data if authenticated
+        loadUserProfile();
+        loadAppointments();
+    } catch (error) {
+        console.error('Invalid token:', error);
+        logout();
+    }
+}
+
+async function login() {
+    const email = elements.loginEmail.value.trim();
+    const password = elements.loginPassword.value;
+    
+    if (!validateEmail(email)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+    }
+    
+    if (!password) {
+        showToast('Please enter your password', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            token = data.data.token;
+            localStorage.setItem('token', token);
+            
+            showToast('Welcome back! Login successful.', 'success');
+            closeModal('loginModal');
+            
+            checkAuth();
+            updateUI();
+            loadAppointments();
+        } else {
+            showToast(data.error || 'Login failed. Please check your credentials.', 'error');
+        }
+    } catch (error) {
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function register() {
+    const username = elements.registerUsername.value.trim();
+    const email = elements.registerEmail.value.trim();
+    const password = elements.registerPassword.value;
+    const phone = elements.registerPhone.value.trim();
+    
+    // Validation
+    if (!username) {
+        showToast('Please enter your full name', 'error');
+        return;
+    }
+    
+    if (!validateEmail(email)) {
+        showToast('Please enter a valid email address', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showToast('Password must be at least 6 characters', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                username, 
+                email, 
+                password, 
+                phone: phone || undefined 
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('Account created successfully! Please login.', 'success');
+            closeModal('registerModal');
+            showLoginModal();
+            
+            // Clear form
+            elements.registerUsername.value = '';
+            elements.registerEmail.value = '';
+            elements.registerPassword.value = '';
+            elements.registerPhone.value = '';
+        } else {
+            showToast(data.error || 'Registration failed. Please try again.', 'error');
+        }
+    } catch (error) {
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadUserProfile() {
+    if (!token) return;
+    
+    try {
+        const response = await fetch(`${API_URL}/users/profile`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            displayUserProfile(data.data.user);
+        }
+    } catch (error) {
+        console.error('Error loading profile:', error);
+    }
+}
+
+function displayUserProfile(user) {
+    if (!elements.profileInfo) return;
+    
+    elements.profileInfo.innerHTML = `
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <i class="fas fa-user-circle"></i>
+            </div>
+            <div class="profile-details">
+                <h4>${user.username}</h4>
+                <p>${user.email}</p>
+                <span class="user-role ${user.role}">${user.role}</span>
+            </div>
+        </div>
+        <div class="profile-stats">
+            <div class="stat">
+                <span class="stat-label">Member Since</span>
+                <span class="stat-value">${new Date(user.createdAt).toLocaleDateString()}</span>
+            </div>
+        </div>
+        <button class="btn btn-outline btn-block" onclick="editProfile()">
+            <i class="fas fa-edit"></i> Edit Profile
+        </button>
+    `;
+    
+    if (elements.userGreeting) {
+        elements.userGreeting.textContent = `Hi, ${user.username.split(' ')[0]}`;
+    }
+}
+
+function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        token = null;
+        currentUser = null;
+        localStorage.removeItem('token');
+        
+        showToast('Logged out successfully', 'info');
+        updateUI();
+    }
+}
+
+// ===== SERVICES =====
+async function loadServices() {
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`${API_URL}/services`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            services = data.data.services;
+            displayServices(services);
+            populateServiceSelect(services);
+        } else {
+            // Fallback: Display sample services if API fails
+            displaySampleServices();
+        }
+    } catch (error) {
+        console.error('Error loading services:', error);
+        // Fallback: Display sample services
+        displaySampleServices();
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displayServices(services) {
+    if (!elements.servicesGrid) return;
+    
+    if (!services || services.length === 0) {
+        elements.servicesGrid.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-spa"></i>
+                <p>No services available at the moment.</p>
+                <p>Please check back soon or contact us.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const servicesHtml = services.map(service => `
+        <div class="service-card">
+            <div class="service-card-header">
+                <i class="fas fa-spa service-icon"></i>
+                <h3>${service.name}</h3>
+            </div>
+            <p class="service-description">${service.description || 'Premium beauty service'}</p>
+            <div class="service-price">$${service.price}</div>
+            <div class="service-meta">
+                <span class="service-duration">
+                    <i class="far fa-clock"></i> ${service.duration} min
+                </span>
+                <span class="service-category">
+                    <i class="fas fa-tag"></i> ${service.category}
+                </span>
+            </div>
+            <button class="btn btn-primary btn-block" onclick="selectService('${service._id}')">
+                <i class="fas fa-calendar-plus"></i> Book Now
+            </button>
+        </div>
+    `).join('');
+    
+    elements.servicesGrid.innerHTML = servicesHtml;
+}
+
+function displaySampleServices() {
+    const sampleServices = [
+        {
+            _id: "1",
+            name: "Signature Haircut & Styling",
+            description: "Professional haircut with expert styling and finishing",
+            category: "hair",
+            duration: 90,
+            price: 85
+        },
+        {
+            _id: "2",
+            name: "Luxury Manicure",
+            description: "Premium manicure with gel polish and hand treatment",
+            category: "nails",
+            duration: 75,
+            price: 65
+        },
+        {
+            _id: "3",
+            name: "HydraFacial Treatment",
+            description: "Advanced facial treatment for glowing skin",
+            category: "face",
+            duration: 60,
+            price: 120
+        }
+    ];
+    
+    displayServices(sampleServices);
+    populateServiceSelect(sampleServices);
+}
+
+function populateServiceSelect(services) {
+    if (!elements.serviceSelect) return;
+    
+    elements.serviceSelect.innerHTML = `
+        <option value="">Choose a service</option>
+        ${services.map(service => `
+            <option value="${service._id}">
+                ${service.name} - $${service.price} (${service.duration} min)
+            </option>
+        `).join('')}
+    `;
+}
+
+function selectService(serviceId) {
+    if (!token) {
+        showToast('Please login to book an appointment', 'warning');
+        showLoginModal();
+        return;
+    }
+    
+    if (elements.serviceSelect) {
+        elements.serviceSelect.value = serviceId;
+        scrollToBooking();
+        updateBookButton();
+    }
+}
+
+// ===== APPOINTMENTS =====
+async function createAppointment() {
+    if (!token) {
+        showToast('Please login to book an appointment', 'warning');
+        showLoginModal();
+        return;
+    }
+    
+    const serviceId = elements.serviceSelect.value;
+    const date = elements.bookingDate.value;
+    const time = elements.bookingTime.value;
+    const notes = elements.bookingNotes.value.trim();
+    
+    // Validation
+    if (!serviceId) {
+        showToast('Please select a service', 'error');
+        return;
+    }
+    
+    if (!date || !time) {
+        showToast('Please select date and time', 'error');
+        return;
+    }
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`${API_URL}/appointments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                service: serviceId,
+                date: date,
+                timeSlot: time,
+                notes: notes || undefined
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('Appointment booked successfully!', 'success');
+            
+            // Clear form
+            elements.serviceSelect.value = '';
+            elements.bookingNotes.value = '';
+            
+            // Set next available date/time
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            elements.bookingDate.value = tomorrow.toISOString().split('T')[0];
+            
+            const nextHour = new Date();
+            nextHour.setHours(nextHour.getHours() + 1);
+            elements.bookingTime.value = `${String(nextHour.getHours()).padStart(2, '0')}:00`;
+            
+            // Update dashboard
+            loadAppointments();
+        } else {
+            showToast(data.error || 'Booking failed. Please try again.', 'error');
+        }
+    } catch (error) {
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function loadAppointments() {
+    if (!token) return;
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`${API_URL}/appointments/my`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            displayAppointments(data.data.appointments);
+        }
+    } catch (error) {
+        console.error('Error loading appointments:', error);
+        showError('upcomingAppointments', 'Unable to load appointments.');
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displayAppointments(appointments) {
+    if (!appointments || appointments.length === 0) {
+        if (elements.upcomingAppointments) {
+            elements.upcomingAppointments.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-plus"></i>
+                    <p>No appointments yet</p>
+                    <button class="btn btn-text" onclick="scrollToBooking()">
+                        Book your first appointment
+                    </button>
+                </div>
+            `;
+        }
+        
+        if (elements.pastAppointments) {
+            elements.pastAppointments.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-clock"></i>
+                    <p>No past appointments</p>
+                </div>
+            `;
+        }
+        
+        if (elements.upcomingCount) {
+            elements.upcomingCount.textContent = '0';
+        }
+        
+        return;
+    }
+    
+    const now = new Date();
+    const upcoming = [];
+    const past = [];
+    
+    appointments.forEach(appointment => {
+        const appointmentDate = new Date(appointment.date);
+        if (appointmentDate >= now && appointment.status !== 'cancelled') {
+            upcoming.push(appointment);
+        } else {
+            past.push(appointment);
+        }
+    });
+    
+    // Display upcoming appointments
+    if (elements.upcomingAppointments) {
+        if (upcoming.length === 0) {
+            elements.upcomingAppointments.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-plus"></i>
+                    <p>No upcoming appointments</p>
+                    <button class="btn btn-text" onclick="scrollToBooking()">
+                        Book a new appointment
+                    </button>
+                </div>
+            `;
+        } else {
+            elements.upcomingAppointments.innerHTML = upcoming.map(appointment => `
+                <div class="appointment-item">
+                    <div class="appointment-header">
+                        <h4>${appointment.service?.name || 'Service'}</h4>
+                        <span class="appointment-status ${appointment.status}">
+                            ${appointment.status}
+                        </span>
+                    </div>
+                    <div class="appointment-details">
+                        <p><i class="far fa-calendar"></i> ${new Date(appointment.date).toLocaleDateString()}</p>
+                        <p><i class="far fa-clock"></i> ${appointment.timeSlot}</p>
+                        ${appointment.notes ? `<p><i class="far fa-sticky-note"></i> ${appointment.notes}</p>` : ''}
+                    </div>
+                    ${appointment.status === 'pending' || appointment.status === 'confirmed' ? `
+                        <button class="btn btn-text btn-sm" onclick="cancelAppointment('${appointment._id}')">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+    }
+    
+    // Display past appointments
+    if (elements.pastAppointments) {
+        if (past.length === 0) {
+            elements.pastAppointments.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-clock"></i>
+                    <p>No past appointments</p>
+                </div>
+            `;
+        } else {
+            elements.pastAppointments.innerHTML = past.slice(0, 5).map(appointment => `
+                <div class="appointment-item past">
+                    <div class="appointment-header">
+                        <h4>${appointment.service?.name || 'Service'}</h4>
+                        <span class="appointment-status ${appointment.status}">
+                            ${appointment.status}
+                        </span>
+                    </div>
+                    <div class="appointment-details">
+                        <p><i class="far fa-calendar"></i> ${new Date(appointment.date).toLocaleDateString()}</p>
+                        <p><i class="far fa-clock"></i> ${appointment.timeSlot}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+    
+    // Update count
+    if (elements.upcomingCount) {
+        elements.upcomingCount.textContent = upcoming.length.toString();
+    }
+}
+
+async function cancelAppointment(appointmentId) {
+    if (!confirm('Are you sure you want to cancel this appointment?')) return;
+    
+    showLoading(true);
+    
+    try {
+        const response = await fetch(`${API_URL}/appointments/${appointmentId}/cancel`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            showToast('Appointment cancelled successfully', 'success');
+            loadAppointments();
+        } else {
+            const data = await response.json();
+            showToast(data.error || 'Cancellation failed', 'error');
+        }
+    } catch (error) {
+        showToast('Network error. Please try again.', 'error');
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ===== UI HELPERS =====
+function updateUI() {
+    const isAuthenticated = !!currentUser;
+    
+    // Update auth buttons
+    if (elements.loginBtn && elements.registerBtn) {
+        elements.loginBtn.style.display = isAuthenticated ? 'none' : 'inline-flex';
+        elements.registerBtn.style.display = isAuthenticated ? 'none' : 'inline-flex';
+    }
+    
+    // Update user dropdown
+    if (elements.userDropdown) {
+        elements.userDropdown.style.display = isAuthenticated ? 'flex' : 'none';
+    }
+    
+    // Show/hide dashboard
+    if (elements.dashboard) {
+        elements.dashboard.style.display = isAuthenticated ? 'block' : 'none';
+    }
+    
+    // Update booking button
+    updateBookButton();
+}
+
+function updateBookButton() {
+    if (!elements.bookBtn) return;
+    
+    const serviceSelected = elements.serviceSelect && elements.serviceSelect.value;
+    const isAuthenticated = !!currentUser;
+    
+    elements.bookBtn.disabled = !serviceSelected || !isAuthenticated;
+    elements.bookBtn.innerHTML = !isAuthenticated 
+        ? '<i class="fas fa-lock"></i> Login to Book'
+        : !serviceSelected
+        ? '<i class="fas fa-calendar-check"></i> Select Service First'
+        : '<i class="fas fa-calendar-check"></i> Book Appointment';
+}
+
+function showModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        closeAllModals();
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function closeAllModals() {
+    const modals = document.querySelectorAll('.modal-overlay');
+    modals.forEach(modal => {
+        modal.style.display = 'none';
+    });
+    document.body.style.overflow = 'auto';
+}
+
+function showLoginModal() {
+    showModal('loginModal');
+}
+
+function showRegisterModal() {
+    showModal('registerModal');
+}
+
+function showLoginFromRegister() {
+    closeModal('registerModal');
+    showLoginModal();
+}
+
+function showRegisterFromLogin() {
+    closeModal('loginModal');
+    showRegisterModal();
+}
+
+function scrollToBooking() {
+    const bookingSection = document.getElementById('booking');
+    if (bookingSection) {
+        bookingSection.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function scrollToServices() {
+    const servicesSection = document.getElementById('services');
+    if (servicesSection) {
+        servicesSection.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function showToast(message, type = 'info') {
+    if (!elements.toast) return;
+    
+    elements.toast.textContent = message;
+    elements.toast.className = `toast ${type}`;
+    elements.toast.style.display = 'flex';
+    
+    setTimeout(() => {
+        elements.toast.style.display = 'none';
+    }, 3000);
+}
+
+function showLoading(show) {
+    if (!elements.loadingOverlay) return;
+    
+    elements.loadingOverlay.style.display = show ? 'flex' : 'none';
+}
+
+function showError(elementId, message) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = `
+            <div class="empty-state error">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+}
+
+// ===== VALIDATION =====
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+// ===== CONSOLE WELCOME =====
+console.log(`%c✨ Welcome to ${APP_NAME}! ✨`, 
+    'color: #8A4FFF; font-size: 18px; font-weight: bold;');
+console.log('%cPremium Beauty Salon Management System', 
+    'color: #666; font-size: 14px;');
